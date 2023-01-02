@@ -1,0 +1,83 @@
+name: Sync kernel
+
+on:
+  repository_dispatch:
+    types:
+      - Sync-Kernel
+  workflow_dispatch:
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  Synchronize-Kernel:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo timedatectl set-timezone "$TZ"
+        pwd
+
+    - name: Download kernel
+      uses: robinraju/release-downloader@v1.4
+      with:
+        repository: "ffuqiangg/amlogic-s9xxx-armbian"
+        fileName: "*"
+        tarBall: false
+        zipBall: false
+        out-file-path: ./kernel
+        tag: ${{ github.event.client_payload.release_tag }}
+
+    - name: Copy kernel file
+      id: copyKernel
+      run: |
+        NEW_KERNEL=$(echo ${{ github.event.client_payload.release_tag }} | cut -d _ -f 2)
+        cd kernel/
+        rm -rf ${NEW_KERNEL%.*}.*/ && echo "✨ Remove old kernel."
+        ls ./*.tar.gz | xargs -n1 tar xzvf && echo "✨ Decopress new kernel."
+        rm -f ./*gz && echo "✨ Remove download file."
+        echo "NEW_KERNEL=${NEW_KERNEL}" >> ${GITHUB_ENV}
+
+    - name: Git commit
+      run: |
+        git config --global user.email ffuqiangg@gmail.com
+        git config --global user.name ffuqiangg
+        git add .
+        git commit -m "update kernel"
+        git pull --rebase
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GH_TOKEN }}
+
+    - name: Build Openwrt
+      if: github.event.client_payload.auto_build == 'true'
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.OPENWRT_TK }}
+        repository: ffuqiangg/build_openwrt
+        event-type: Build-Openwrt
+        client-payload: '{"kernel_name": "${{ env.NEW_KERNEL }}", "kernel_repo_url": "https://github.com/ffuqiangg/kernel/tree/main", "kernel_auto": "false"}'
+
+    - name: Delete Kernel Release
+      if: github.event.client_payload.rm_release == 'true'
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.ARMBIAN_TK }}
+        repository: ffuqiangg/amlogic-s9xxx-armbian
+        event-type: Delete-Release
+        client-payload: '{"delete_tag": "${{ github.event.client_payload.release_tag }}"}'
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        retain_days: 1
+        keep_minimum_runs: 10

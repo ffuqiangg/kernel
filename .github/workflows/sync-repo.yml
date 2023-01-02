@@ -1,0 +1,50 @@
+name: Sync Kernel from other repo
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: 17 17 * * *
+
+env:
+  TZ: Asia/Shanghai
+  SHSYNC: sync_repo
+
+jobs:
+  Synchronize-Kernel:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        
+    - name: Check kernel update
+      id: checkUpdate
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo timedatectl set-timezone "$TZ"
+        pwd
+        chmod +x $SHSYNC
+        ./$SHSYNC
+
+    - name: Git commit
+      if: steps.checkUpdate.outputs.status == 'success'
+      run: |
+        git config --global user.email ffuqiangg@gmail.com
+        git config --global user.name ffuqiangg
+        git add .
+        git commit -m "update kernel"
+        git pull --rebase
+        
+    - name: Push changes
+      if: steps.checkUpdate.outputs.status == 'success'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GH_TOKEN }}
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        retain_days: 1
+        keep_minimum_runs: 10

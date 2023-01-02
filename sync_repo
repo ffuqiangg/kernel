@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Set kernel version
+kernelList="5.15"
+
+find_version() {
+    find ${1} -type d -name "${2}.*" | awk -F "." '{print $NF}' | sort -n | tail -1
+}
+
+# Download Kernel file
+echo -e "${STEPS} Start download Kernel file."
+svn export https://github.com/breakings/OpenWrt/trunk/opt/kernel breakings || BST="fail"
+svn export https://github.com/ophub/kernel/trunk/pub/stable ophub || OST="fail"
+if [[ "${BST}" == "fail" && "${OST}" == "fail" ]]; then
+    echo "🔴 Kernel [ all ] download failure."
+    DL_STAT="fail"
+elif [[ "${BST}" == "fail" && "${OST}" != "fail" ]]; then
+    echo "⚠️ Kernel [ breakings ] download failure."
+elif [[ "${BST}" != "fail" && "${OST}" == "fail" ]]; then
+    echo "⚠️ Kernel [ ophub ] download failure."
+fi
+
+UPDATE="failure"
+if [[ "${DL_STAT}" != "fail" ]]; then
+    echo -e "🎯 Copy kernel file."
+    for kernelVersion in $kernelList ; do
+        localKernel="$(find_version kernel "${kernelVersion}")"
+        ophubKernel="$(find_version ophub "${kernelVersion}")"
+        breakingsKernel="$(find_version breakings "${kernelVersion}")"
+        if [[ -z "${ophubKernel}" && -z "${breakingsKernel}" ]]; then
+            echo -e "⚠️ Kernel ${kernelVersion} failuret found."
+            continue
+        else
+            if [[ -z "${breakingsKernel}" ]]; then
+                remoteKernel="${ophubKernel}"
+                remoteRepo="ophub"
+            elif [[ -z "${ophubKernel}" ]]; then
+                remoteKernel="${breakingsKernel}"
+                remoteRepo="breakings"
+            else
+                if [[ "${breakingsKernel}" -ge "${ophubKernel}" ]]; then
+                    remoteKernel="${breakingsKernel}"
+                    remoteRepo="breakings"
+                else
+                    remoteKernel="${ophubKernel}"
+                    remoteRepo="ophub"
+                fi
+            fi
+            echo -e "💬 Kernel ${kernelVersion}.${remoteKernel} from: [ ${remoteRepo} ]"
+
+            if [[ -z "${localKernel}" ]]; then
+                cp -r ${remoteRepo}/${kernelVersion}.${remoteKernel} kernel/
+                echo -e "✨ Kernel ${kernelVersion}.${remoteKernel} file is update."
+                UPDATE="success"
+            elif [[ "${remoteKernel}" -gt "${localKernel}" ]]; then
+                rm -rf kernel/"${kernelVersion}".* && cp -r ${remoteRepo}/${kernelVersion}.${remoteKernel} kernel/
+                echo -e "✨ Kernel ${kernelVersion}.${remoteKernel} file is update."
+                UPDATE="success"
+            fi
+        fi
+    done
+fi
+
+# Set output variable
+if [[ "${UPDATE}" == "failure" ]]; then
+    echo "status=failure" >> ${GITHUB_OUTPUT}
+    echo -e "💬 The Kernel need not update."
+else
+    echo "status=success" >> ${GITHUB_OUTPUT}
+fi
+
+# Remove the origin file
+rm -rf ophub/ breakings/ && echo "✨ Remove download file."
