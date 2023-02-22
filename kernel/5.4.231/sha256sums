@@ -1,6 +1,6 @@
-d73d1425ef2a6e54adf173f43bbc665d6d55b11b51c7a68e8bede5c0f9123edb  boot-5.4.231-ffuqiangg.tar.gz
-2176dade21ed618fce314d408d510a342b98a564300c2a0cdc24e81fc5cce219  dtb-allwinner-5.4.231-ffuqiangg.tar.gz
-d9bd3478d9341bea888f58e2bfde88a8b086238ab4b13b2662e85c2f86a67ac7  dtb-amlogic-5.4.231-ffuqiangg.tar.gz
-410e2b79ead84ea06d2630abea27d71b3383efa7aa845d9c372502aee230de71  dtb-rockchip-5.4.231-ffuqiangg.tar.gz
-839c6426dcc22e53ccaeea578d843ea9ef862ea652ead6c87ead2d42c8d15f1a  header-5.4.231-ffuqiangg.tar.gz
-22aa6b9928b89a2a9739e9c1ffd939cd42219b83dfd02850def0a9a6f228d59f  modules-5.4.231-ffuqiangg.tar.gz
+520345558080a9c5d3d5cb2934fe8162be34dd5d747713721af2ced0dde9f0b1  boot-5.4.231-ffuqiangg.tar.gz
+3a8b749e72fb20ce4ab3ec320b7a15350092f847dc663c26152d1cd7614e696e  dtb-allwinner-5.4.231-ffuqiangg.tar.gz
+e0a325e7fb40b410cbd6c8f9144cfc6c5ccff668339f71780fd105caf6de9169  dtb-amlogic-5.4.231-ffuqiangg.tar.gz
+86210e01ff95e0c62289c207a18a3360cf6ef9981cb4c0a6d5f6d4903eefd7fc  dtb-rockchip-5.4.231-ffuqiangg.tar.gz
+8a1e4cf3bf1046ec30ab0ab33cf540f5669fa17a8394cda0dc98e6fe591a54e8  header-5.4.231-ffuqiangg.tar.gz
+5625559d0d4b1186b9680c323d51a00ebd16f5689884f50becac2b727b224ce9  modules-5.4.231-ffuqiangg.tar.gz
